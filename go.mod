@@ -1,3 +1,3 @@
-module github.com/LockedThread/knighthacks_shared
+module github.com/KnightHacks/knighthacks_shared
 
 go 1.18
