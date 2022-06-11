@@ -2,7 +2,10 @@ module github.com/KnightHacks/knighthacks_shared
 
 go 1.18
 
-require golang.org/x/oauth2 v0.0.0-20220524215830-622c5d57e401
+require (
+	github.com/golang-jwt/jwt v3.2.2+incompatible
+	golang.org/x/oauth2 v0.0.0-20220524215830-622c5d57e401
+)
 
 require (
 	github.com/golang/protobuf v1.4.2 // indirect
