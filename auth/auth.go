@@ -2,10 +2,15 @@ package auth
 
 import (
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
 	"errors"
+	"fmt"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/go-github/v45/github"
 	"golang.org/x/oauth2"
+	"io"
 	"strconv"
 )
 
@@ -19,10 +24,19 @@ const (
 type Auth struct {
 	ConfigMap  map[Provider]oauth2.Config
 	signingKey string
+	gcm        cipher.AEAD
 }
 
-func NewAuth(signingKey string, configMap map[Provider]oauth2.Config) *Auth {
-	return &Auth{ConfigMap: configMap, signingKey: signingKey}
+func NewAuth(signingKey string, cipher32Bit string, configMap map[Provider]oauth2.Config) (*Auth, error) {
+	newCipher, err := aes.NewCipher([]byte(cipher32Bit))
+	if err != nil {
+		return nil, err
+	}
+	gcm, err := cipher.NewGCM(newCipher)
+	if err != nil {
+		return nil, err
+	}
+	return &Auth{ConfigMap: configMap, signingKey: signingKey, gcm: gcm}, nil
 }
 
 func (a *Auth) GetAuthCodeURL(provider Provider) string {
@@ -36,10 +50,9 @@ func (a *Auth) ExchangeCode(ctx context.Context, provider Provider, code string)
 	return config.Exchange(ctx, code)
 }
 
-func (a *Auth) GetUID(ctx context.Context, provider Provider, token *oauth2.Token) (string, error) {
+func (a *Auth) GetUID(ctx context.Context, provider Provider, token string) (string, error) {
 	config := a.ConfigMap[provider]
-
-	oauthClient := oauth2.NewClient(ctx, config.TokenSource(ctx, token))
+	oauthClient := oauth2.NewClient(ctx, config.TokenSource(ctx, &oauth2.Token{AccessToken: token}))
 
 	if provider == GitHubAuthProvider {
 		githubClient := github.NewClient(oauthClient)
@@ -58,6 +71,30 @@ func (a *Auth) GetUID(ctx context.Context, provider Provider, token *oauth2.Toke
 	// TODO: implement for gmail
 	panic("not implemented for gmail")
 	return "", nil
+}
+
+func (a *Auth) EncryptAccessToken(token string) string {
+	nonce := make([]byte, a.gcm.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		fmt.Println(err)
+	}
+	encrypted := a.gcm.Seal(nonce, nonce, []byte(token), nil)
+	return string(encrypted)
+}
+
+func (a *Auth) DecryptAccessToken(token string) (string, error) {
+	bytez := []byte(token)
+
+	nonceSize := a.gcm.NonceSize()
+	if len(bytez) < nonceSize {
+		return "", errors.New("size of cipher < nonce")
+	}
+	nonce, bytez := bytez[:nonceSize], bytez[nonceSize:]
+	decryptedBytes, err := a.gcm.Open(nil, nonce, bytez, nil)
+	if err != nil {
+		return "", err
+	}
+	return string(decryptedBytes), nil
 }
 
 func (a *Auth) NewJWT(mapClaims jwt.MapClaims) (string, error) {
