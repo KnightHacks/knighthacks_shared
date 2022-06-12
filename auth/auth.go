@@ -73,28 +73,28 @@ func (a *Auth) GetUID(ctx context.Context, provider Provider, token string) (str
 	return "", nil
 }
 
-func (a *Auth) EncryptAccessToken(token string) string {
+func (a *Auth) EncryptAccessToken(token string) []byte {
 	nonce := make([]byte, a.gcm.NonceSize())
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		fmt.Println(err)
 	}
 	encrypted := a.gcm.Seal(nonce, nonce, []byte(token), nil)
-	return string(encrypted)
+	return encrypted
 }
 
-func (a *Auth) DecryptAccessToken(token string) (string, error) {
+func (a *Auth) DecryptAccessToken(token string) ([]byte, error) {
 	bytez := []byte(token)
 
 	nonceSize := a.gcm.NonceSize()
 	if len(bytez) < nonceSize {
-		return "", errors.New("size of cipher < nonce")
+		return nil, errors.New("size of cipher < nonce")
 	}
 	nonce, bytez := bytez[:nonceSize], bytez[nonceSize:]
 	decryptedBytes, err := a.gcm.Open(nil, nonce, bytez, nil)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(decryptedBytes), nil
+	return decryptedBytes, nil
 }
 
 func (a *Auth) NewJWT(mapClaims jwt.MapClaims) (string, error) {
