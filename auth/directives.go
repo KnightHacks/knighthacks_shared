@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/KnightHacks/knighthacks_shared/models"
 	"github.com/KnightHacks/knighthacks_shared/utils"
 )
 
@@ -10,7 +11,7 @@ type HasRoleDirective struct {
 	GetId func(ctx context.Context, obj interface{}) (string, error)
 }
 
-func (receiver HasRoleDirective) Direct(ctx context.Context, obj interface{}, next graphql.Resolver, role string) (interface{}, error) {
+func (receiver HasRoleDirective) Direct(ctx context.Context, obj interface{}, next graphql.Resolver, role models.Role) (interface{}, error) {
 	ginContext, err := utils.GinContextFromContext(ctx)
 	if err != nil {
 		return nil, err

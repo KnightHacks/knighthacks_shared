@@ -23,8 +23,8 @@ type Auth struct {
 }
 
 type UserClaims struct {
-	UserID string `json:"user_id"`
-	Role   string `json:"role"`
+	UserID string      `json:"user_id"`
+	Role   models.Role `json:"role"`
 	jwt.StandardClaims
 }
 
@@ -98,7 +98,7 @@ func (a *Auth) DecryptAccessToken(token string) ([]byte, error) {
 	return decryptedBytes, nil
 }
 
-func (a *Auth) NewTokens(userId string, role string) (refreshToken string, accessToken string, err error) {
+func (a *Auth) NewTokens(userId string, role models.Role) (refreshToken string, accessToken string, err error) {
 	refreshToken, err = a.NewRefreshToken(userId, role)
 	if err != nil {
 		return "", "", err
@@ -110,15 +110,15 @@ func (a *Auth) NewTokens(userId string, role string) (refreshToken string, acces
 	return refreshToken, accessToken, nil
 }
 
-func (a *Auth) NewRefreshToken(userId string, role string) (string, error) {
+func (a *Auth) NewRefreshToken(userId string, role models.Role) (string, error) {
 	return a.newJWT(userId, role, time.Minute*60)
 }
 
-func (a *Auth) NewAccessToken(userId string, role string) (string, error) {
+func (a *Auth) NewAccessToken(userId string, role models.Role) (string, error) {
 	return a.newJWT(userId, role, time.Minute*15)
 }
 
-func (a *Auth) newJWT(userId string, role string, expiration time.Duration) (string, error) {
+func (a *Auth) newJWT(userId string, role models.Role, expiration time.Duration) (string, error) {
 	now := time.Now()
 	claims := UserClaims{
 		userId,
