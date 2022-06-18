@@ -133,7 +133,7 @@ func (a *Auth) newJWT(userId string, role models.Role, expiration time.Duration)
 			Issuer:    "knighthacks",
 		},
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(a.signingKey)
 }
 
