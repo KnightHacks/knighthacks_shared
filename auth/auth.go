@@ -22,7 +22,7 @@ var (
 
 type Auth struct {
 	ConfigMap  map[models.Provider]oauth2.Config
-	signingKey string
+	signingKey []byte
 	gcm        cipher.AEAD
 }
 
@@ -41,7 +41,7 @@ func NewAuth(signingKey string, cipher32Bit string, configMap map[models.Provide
 	if err != nil {
 		return nil, err
 	}
-	return &Auth{ConfigMap: configMap, signingKey: signingKey, gcm: gcm}, nil
+	return &Auth{ConfigMap: configMap, signingKey: []byte(signingKey), gcm: gcm}, nil
 }
 
 func (a *Auth) GetAuthCodeURL(provider models.Provider) string {
