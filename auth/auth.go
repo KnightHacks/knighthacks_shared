@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"github.com/KnightHacks/knighthacks_shared/models"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/go-github/v45/github"
 	"golang.org/x/oauth2"
@@ -15,15 +16,8 @@ import (
 	"time"
 )
 
-type Provider int
-
-const (
-	GitHubAuthProvider Provider = iota
-	GmailAuthProvider  Provider = iota
-)
-
 type Auth struct {
-	ConfigMap  map[Provider]oauth2.Config
+	ConfigMap  map[models.Provider]oauth2.Config
 	signingKey string
 	gcm        cipher.AEAD
 }
@@ -34,7 +28,7 @@ type UserClaims struct {
 	jwt.StandardClaims
 }
 
-func NewAuth(signingKey string, cipher32Bit string, configMap map[Provider]oauth2.Config) (*Auth, error) {
+func NewAuth(signingKey string, cipher32Bit string, configMap map[models.Provider]oauth2.Config) (*Auth, error) {
 	newCipher, err := aes.NewCipher([]byte(cipher32Bit))
 	if err != nil {
 		return nil, err
@@ -46,22 +40,22 @@ func NewAuth(signingKey string, cipher32Bit string, configMap map[Provider]oauth
 	return &Auth{ConfigMap: configMap, signingKey: signingKey, gcm: gcm}, nil
 }
 
-func (a *Auth) GetAuthCodeURL(provider Provider) string {
+func (a *Auth) GetAuthCodeURL(provider models.Provider) string {
 	config := a.ConfigMap[provider]
 	// TODO: Implement oauth2 'state' on url to prevent CSRF https://datatracker.ietf.org/doc/html/rfc6749#section-10.12
 	return config.AuthCodeURL("state", oauth2.AccessTypeOffline)
 }
 
-func (a *Auth) ExchangeCode(ctx context.Context, provider Provider, code string) (*oauth2.Token, error) {
+func (a *Auth) ExchangeCode(ctx context.Context, provider models.Provider, code string) (*oauth2.Token, error) {
 	config := a.ConfigMap[provider]
 	return config.Exchange(ctx, code)
 }
 
-func (a *Auth) GetUID(ctx context.Context, provider Provider, token string) (string, error) {
+func (a *Auth) GetUID(ctx context.Context, provider models.Provider, token string) (string, error) {
 	config := a.ConfigMap[provider]
 	oauthClient := oauth2.NewClient(ctx, config.TokenSource(ctx, &oauth2.Token{AccessToken: token}))
 
-	if provider == GitHubAuthProvider {
+	if provider == models.ProviderGithub {
 		githubClient := github.NewClient(oauthClient)
 
 		user, _, err := githubClient.Users.Get(ctx, "")
