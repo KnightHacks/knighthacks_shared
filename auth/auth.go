@@ -16,6 +16,10 @@ import (
 	"time"
 )
 
+var (
+	TokenNotValid = errors.New("jwt token not valid")
+)
+
 type Auth struct {
 	ConfigMap  map[models.Provider]oauth2.Config
 	signingKey string
@@ -111,11 +115,11 @@ func (a *Auth) NewTokens(userId string, role models.Role) (refreshToken string, 
 }
 
 func (a *Auth) NewRefreshToken(userId string, role models.Role) (string, error) {
-	return a.newJWT(userId, role, time.Minute*60)
+	return a.newJWT(userId, role, time.Hour*24)
 }
 
 func (a *Auth) NewAccessToken(userId string, role models.Role) (string, error) {
-	return a.newJWT(userId, role, time.Minute*15)
+	return a.newJWT(userId, role, time.Minute*30)
 }
 
 func (a *Auth) newJWT(userId string, role models.Role, expiration time.Duration) (string, error) {
@@ -137,12 +141,11 @@ func (a *Auth) ParseJWT(tokenString string) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(a.signingKey), nil
 	})
-	// TODO: standardize errors
 	if err != nil {
 		return nil, err
 	}
 	if !token.Valid {
-		return nil, nil
+		return nil, TokenNotValid
 	}
 	if claims, ok := token.Claims.(*UserClaims); ok {
 		return claims, nil
