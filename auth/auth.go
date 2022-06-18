@@ -12,6 +12,7 @@ import (
 	"golang.org/x/oauth2"
 	"io"
 	"strconv"
+	"time"
 )
 
 type Provider int
@@ -25,6 +26,12 @@ type Auth struct {
 	ConfigMap  map[Provider]oauth2.Config
 	signingKey string
 	gcm        cipher.AEAD
+}
+
+type UserClaims struct {
+	UserID string `json:"user_id"`
+	Role   string `json:"role"`
+	jwt.StandardClaims
 }
 
 func NewAuth(signingKey string, cipher32Bit string, configMap map[Provider]oauth2.Config) (*Auth, error) {
@@ -97,8 +104,54 @@ func (a *Auth) DecryptAccessToken(token string) ([]byte, error) {
 	return decryptedBytes, nil
 }
 
-func (a *Auth) NewJWT(mapClaims jwt.MapClaims) (string, error) {
-	token := jwt.New(jwt.SigningMethodRS256)
-	token.Claims = mapClaims
+func (a *Auth) NewTokens(userId string, role string) (refreshToken string, accessToken string, err error) {
+	refreshToken, err = a.NewRefreshToken(userId, role)
+	if err != nil {
+		return "", "", err
+	}
+	accessToken, err = a.NewAccessToken(userId, role)
+	if err != nil {
+		return "", "", err
+	}
+	return refreshToken, accessToken, nil
+}
+
+func (a *Auth) NewRefreshToken(userId string, role string) (string, error) {
+	return a.newJWT(userId, role, time.Minute*60)
+}
+
+func (a *Auth) NewAccessToken(userId string, role string) (string, error) {
+	return a.newJWT(userId, role, time.Minute*15)
+}
+
+func (a *Auth) newJWT(userId string, role string, expiration time.Duration) (string, error) {
+	now := time.Now()
+	claims := UserClaims{
+		userId,
+		role,
+		jwt.StandardClaims{
+			ExpiresAt: now.Add(expiration).UnixMilli(),
+			IssuedAt:  now.UnixMilli(),
+			Issuer:    "knighthacks",
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	return token.SignedString(a.signingKey)
+}
+
+func (a *Auth) ParseJWT(tokenString string) (*UserClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(a.signingKey), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !token.Valid {
+		return nil, nil
+	}
+	if claims, ok := token.Claims.(*UserClaims); ok {
+		return claims, nil
+	} else {
+		return nil, errors.New("unable to cast jwt claims to UserClaims")
+	}
 }
