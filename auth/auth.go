@@ -137,6 +137,7 @@ func (a *Auth) ParseJWT(tokenString string) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(a.signingKey), nil
 	})
+	// TODO: standardize errors
 	if err != nil {
 		return nil, err
 	}
