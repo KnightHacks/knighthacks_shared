@@ -24,7 +24,7 @@ func (receiver HasRoleDirective) Direct(ctx context.Context, obj interface{}, ne
 
 	authHeader := ginContext.GetHeader("authorization")
 
-	userClaims, err := auth.ParseJWT(authHeader)
+	userClaims, err := auth.ParseJWT(authHeader, AccessTokenType)
 	if err != nil {
 		return nil, err
 	}

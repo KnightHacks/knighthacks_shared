@@ -16,6 +16,13 @@ import (
 	"time"
 )
 
+type TokenType string
+
+const (
+	RefreshTokenType TokenType = "REFRESH"
+	AccessTokenType  TokenType = "ACCESS"
+)
+
 var (
 	TokenNotValid = errors.New("jwt token not valid")
 )
@@ -29,6 +36,7 @@ type Auth struct {
 type UserClaims struct {
 	UserID string      `json:"user_id"`
 	Role   models.Role `json:"role"`
+	Type   TokenType   `json:"type"`
 	jwt.StandardClaims
 }
 
@@ -115,18 +123,19 @@ func (a *Auth) NewTokens(userId string, role models.Role) (refreshToken string, 
 }
 
 func (a *Auth) NewRefreshToken(userId string, role models.Role) (string, error) {
-	return a.newJWT(userId, role, time.Hour*24)
+	return a.newJWT(userId, role, RefreshTokenType, time.Hour*24)
 }
 
 func (a *Auth) NewAccessToken(userId string, role models.Role) (string, error) {
-	return a.newJWT(userId, role, time.Minute*30)
+	return a.newJWT(userId, role, AccessTokenType, time.Minute*30)
 }
 
-func (a *Auth) newJWT(userId string, role models.Role, expiration time.Duration) (string, error) {
+func (a *Auth) newJWT(userId string, role models.Role, tokenType TokenType, expiration time.Duration) (string, error) {
 	now := time.Now()
 	claims := UserClaims{
 		userId,
 		role,
+		tokenType,
 		jwt.StandardClaims{
 			ExpiresAt: now.Add(expiration).UnixMilli(),
 			IssuedAt:  now.UnixMilli(),
@@ -137,9 +146,9 @@ func (a *Auth) newJWT(userId string, role models.Role, expiration time.Duration)
 	return token.SignedString(a.signingKey)
 }
 
-func (a *Auth) ParseJWT(tokenString string) (*UserClaims, error) {
+func (a *Auth) ParseJWT(tokenString string, tokenType TokenType) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(a.signingKey), nil
+		return a.signingKey, nil
 	})
 	if err != nil {
 		return nil, err
@@ -147,7 +156,11 @@ func (a *Auth) ParseJWT(tokenString string) (*UserClaims, error) {
 	if !token.Valid {
 		return nil, TokenNotValid
 	}
+
 	if claims, ok := token.Claims.(*UserClaims); ok {
+		if claims.Type != tokenType {
+			return nil, fmt.Errorf("you are sending a %s token while we need a %s token", claims.Type, tokenType)
+		}
 		return claims, nil
 	} else {
 		return nil, errors.New("unable to cast jwt claims to UserClaims")
