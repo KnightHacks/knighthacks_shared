@@ -137,8 +137,8 @@ func (a *Auth) newJWT(userId string, role models.Role, tokenType TokenType, expi
 		role,
 		tokenType,
 		jwt.StandardClaims{
-			ExpiresAt: now.Add(expiration).UnixMilli(),
-			IssuedAt:  now.UnixMilli(),
+			ExpiresAt: now.Add(expiration).Unix(),
+			IssuedAt:  now.Unix(),
 			Issuer:    "knighthacks",
 		},
 	}
