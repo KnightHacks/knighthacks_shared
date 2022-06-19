@@ -131,7 +131,7 @@ func (a *Auth) NewAccessToken(userId string, role models.Role) (string, error) {
 }
 
 func (a *Auth) newJWT(userId string, role models.Role, tokenType TokenType, expiration time.Duration) (string, error) {
-	now := time.Now()
+	now := time.Now().UTC()
 	claims := UserClaims{
 		userId,
 		role,
