@@ -13,17 +13,19 @@ const (
 	// for now keep this the same
 	RoleSponsor Role = "SPONSOR"
 	RoleNormal  Role = "NORMAL"
+	RoleOwns    Role = "OWNS"
 )
 
 var AllRole = []Role{
 	RoleAdmin,
 	RoleSponsor,
 	RoleNormal,
+	RoleOwns,
 }
 
 func (e Role) IsValid() bool {
 	switch e {
-	case RoleAdmin, RoleSponsor, RoleNormal:
+	case RoleAdmin, RoleSponsor, RoleNormal, RoleOwns:
 		return true
 	}
 	return false
