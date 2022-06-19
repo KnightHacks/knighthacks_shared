@@ -19,16 +19,23 @@ func (receiver HasRoleDirective) Direct(ctx context.Context, obj interface{}, ne
 		return nil, err
 	}
 
-	auth, err := AuthFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
+	var userClaims *UserClaims
 
-	authHeader := ginContext.GetHeader("authorization")
+	value, ok := ctx.Value("AuthorizationUserClaims").(*UserClaims)
+	if ok {
+		userClaims = value
+	} else {
+		auth, err := AuthFromContext(ctx)
+		if err != nil {
+			return nil, err
+		}
 
-	userClaims, err := auth.ParseJWT(authHeader, AccessTokenType)
-	if err != nil {
-		return nil, err
+		authHeader := ginContext.GetHeader("authorization")
+
+		userClaims, err = auth.ParseJWT(authHeader, AccessTokenType)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if userClaims.Role == models.RoleOwns {
