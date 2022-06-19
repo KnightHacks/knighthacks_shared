@@ -52,10 +52,9 @@ func NewAuth(signingKey string, cipher32Bit string, configMap map[models.Provide
 	return &Auth{ConfigMap: configMap, signingKey: []byte(signingKey), gcm: gcm}, nil
 }
 
-func (a *Auth) GetAuthCodeURL(provider models.Provider) string {
+func (a *Auth) GetAuthCodeURL(provider models.Provider, state string) string {
 	config := a.ConfigMap[provider]
-	// TODO: Implement oauth2 'state' on url to prevent CSRF https://datatracker.ietf.org/doc/html/rfc6749#section-10.12
-	return config.AuthCodeURL("state", oauth2.AccessTypeOffline)
+	return config.AuthCodeURL(state, oauth2.AccessTypeOffline)
 }
 
 func (a *Auth) ExchangeCode(ctx context.Context, provider models.Provider, code string) (*oauth2.Token, error) {
