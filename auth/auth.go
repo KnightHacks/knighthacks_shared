@@ -148,6 +148,9 @@ func (a *Auth) newJWT(userId string, role models.Role, tokenType TokenType, expi
 
 func (a *Auth) ParseJWT(tokenString string, tokenType TokenType) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
 		return a.signingKey, nil
 	})
 	if err != nil {
