@@ -62,6 +62,9 @@ func (receiver HasRoleDirective) Direct(ctx context.Context, obj interface{}, ne
 		if err != nil {
 			return nil, err
 		}
+		if len(id) == 0 {
+			return nil, errors.New("unexpectedly the retrieved id is of length 0, possibly using DefaultGetUserId without implementing it")
+		}
 		log.Printf("Checking id:%s against userClaims=%v\n", id, *userClaims)
 		if id != userClaims.UserID {
 			return nil, errors.New("you must be own this data to use this resolver")
