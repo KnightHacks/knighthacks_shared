@@ -9,6 +9,10 @@ import (
 	"log"
 )
 
+func DefaultGetUserId(ctx context.Context, obj interface{}) (string, error) {
+	return "", nil
+}
+
 type HasRoleDirective struct {
 	GetUserId func(ctx context.Context, obj interface{}) (string, error)
 }
