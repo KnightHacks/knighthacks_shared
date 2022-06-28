@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"github.com/KnightHacks/knighthacks_shared/utils"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -19,7 +18,7 @@ type Queryable interface {
 
 func ConnectWithRetries(databaseUri string) (pool *pgxpool.Pool, err error) {
 	for i := 0; i < 10; i++ {
-		pool, err = pgxpool.Connect(context.Background(), utils.GetEnvOrDie("DATABASE_URI"))
+		pool, err = pgxpool.Connect(context.Background(), databaseUri)
 		if err == nil {
 			return pool, nil
 		}
