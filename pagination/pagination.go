@@ -10,11 +10,10 @@ import (
 
 // TODO: should cursors be encrypted? is it worth it?
 
-var ZeroString = "0"
-
 func DecodeCursor(cursor *string) error {
 	if cursor == nil {
-		cursor = &ZeroString
+		var zero = "0"
+		cursor = &zero
 	} else {
 		bytes, err := base64.StdEncoding.DecodeString(*cursor)
 		if err != nil {
