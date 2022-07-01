@@ -35,7 +35,8 @@ func (receiver HasRoleDirective) Direct(ctx context.Context, obj interface{}, ne
 		}
 
 		authHeader := ginContext.GetHeader("authorization")
-
+		// 7 because it's the length of 'bearer '
+		authHeader = authHeader[7:]
 		userClaims, err = auth.ParseJWT(authHeader, AccessTokenType)
 		if err != nil {
 			return nil, err
