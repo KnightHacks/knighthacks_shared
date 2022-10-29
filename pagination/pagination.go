@@ -12,18 +12,16 @@ import (
 
 var ZeroString = "0"
 
-func DecodeCursor(cursor *string) error {
+func DecodeCursor(cursor *string) (string, error) {
 	if cursor == nil {
-		cursor = &ZeroString
-	} else {
-		bytes, err := base64.StdEncoding.DecodeString(*cursor)
-		if err != nil {
-			return err
-		}
-		bytesString := string(bytes)
-		cursor = &bytesString
+		return ZeroString, nil
 	}
-	return nil
+	bytes, err := base64.StdEncoding.DecodeString(*cursor)
+	if err != nil {
+		return "", err
+	}
+	bytesString := string(bytes)
+	return bytesString, nil
 }
 
 func GetPageInfo(first string, last string) *models.PageInfo {

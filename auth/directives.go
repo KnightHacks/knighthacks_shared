@@ -9,6 +9,10 @@ import (
 	"log"
 )
 
+func DefaultGetUserId(ctx context.Context, obj interface{}) (string, error) {
+	return "", nil
+}
+
 type HasRoleDirective struct {
 	GetUserId func(ctx context.Context, obj interface{}) (string, error)
 }
@@ -31,7 +35,8 @@ func (receiver HasRoleDirective) Direct(ctx context.Context, obj interface{}, ne
 		}
 
 		authHeader := ginContext.GetHeader("authorization")
-
+		// 7 because it's the length of 'bearer '
+		authHeader = authHeader[7:]
 		userClaims, err = auth.ParseJWT(authHeader, AccessTokenType)
 		if err != nil {
 			return nil, err
@@ -57,6 +62,9 @@ func (receiver HasRoleDirective) Direct(ctx context.Context, obj interface{}, ne
 		id, err := receiver.GetUserId(ctx, obj)
 		if err != nil {
 			return nil, err
+		}
+		if len(id) == 0 {
+			return nil, errors.New("unexpectedly the retrieved id is of length 0, possibly using DefaultGetUserId without implementing it")
 		}
 		log.Printf("Checking id:%s against userClaims=%v\n", id, *userClaims)
 		if id != userClaims.UserID {
