@@ -81,9 +81,15 @@ func NewOAuthMap() map[models.Provider]oauth2.Config {
 	}
 }
 
-func (a *Auth) GetAuthCodeURL(provider models.Provider, state string) string {
+func (a *Auth) GetAuthCodeURL(provider models.Provider, state string, redirectUrl *string) string {
 	config := a.ConfigMap[provider]
-	return config.AuthCodeURL(state, oauth2.AccessTypeOffline)
+	var currentRedirect = config.RedirectURL
+	if redirectUrl != nil {
+		config.RedirectURL = *redirectUrl
+	}
+	codeURL := config.AuthCodeURL(state, oauth2.AccessTypeOffline)
+	config.RedirectURL = currentRedirect
+	return codeURL
 }
 
 func (a *Auth) ExchangeCode(ctx context.Context, provider models.Provider, code string) (*oauth2.Token, error) {
