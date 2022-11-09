@@ -14,24 +14,26 @@ type Resume struct {
 	Data     []byte
 }
 
-var (
+const (
 	AZURE_STORAGE_ACCOUNT_NAME = "<FILL THIS IN>"
+	MAX_FILE_SIZE              = 25000000
 )
 
-func UploadResume(ctx context.Context, resume *Resume) error {
-	if len(resume.Data) <= 0 {
-		return fmt.Errorf("empty resume")
+/* upload resume to azure and return ID */
+func UploadResume(ctx context.Context, resume *Resume) (string, error) {
+	if len(resume.Data) <= 0 || len(resume.Data) > MAX_FILE_SIZE {
+		return "", fmt.Errorf("empty resume")
 	}
 
 	// write resume data to a temporary file
 	err := os.WriteFile(resume.FileName, resume.Data, 0666)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	fileHandler, err := os.Open(resume.FileName)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer fileHandler.Close()
 
@@ -46,28 +48,24 @@ func UploadResume(ctx context.Context, resume *Resume) error {
 
 	accountName, found := os.LookupEnv(AZURE_STORAGE_ACCOUNT_NAME)
 	if !found {
-		return fmt.Errorf("azure account name not found in environment variables")
+		return "", fmt.Errorf("azure account name not found in environment variables")
 	}
 
 	serviceURL := fmt.Sprintf("https://%s.blob.core.windows.net/", accountName)
-
-	/*
-		what kind of login are we using?
-	*/
 
 	// TODO: placeholder - need function to obtain credentials
 	var cred azcore.TokenCredential
 
 	client, err := azblob.NewClient(serviceURL, cred, nil)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// upload file
-	_, err = client.UploadFile(ctx, "testcontainer", "example/path/blobname", fileHandler, &azblob.UploadFileOptions{})
+	resp, err := client.UploadFile(ctx, "testcontainer", "example/path/blobname", fileHandler, &azblob.UploadFileOptions{})
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return err
+	return *resp.RequestID, err
 }
