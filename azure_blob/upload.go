@@ -15,14 +15,13 @@ type Resume struct {
 }
 
 const (
-	AZURE_STORAGE_ACCOUNT_NAME = "<FILL THIS IN>"
-	MAX_FILE_SIZE              = 25000000
+	MAX_FILE_SIZE = 25000000
 )
 
 /* upload resume to azure and return ID */
-func UploadResume(ctx context.Context, resume *Resume) (string, error) {
+func UploadResume(ctx context.Context, resume *Resume, serviceURL string) (string, error) {
 	if len(resume.Data) <= 0 || len(resume.Data) > MAX_FILE_SIZE {
-		return "", fmt.Errorf("empty resume")
+		return "", fmt.Errorf("invalid resume size")
 	}
 
 	// write resume data to a temporary file
@@ -46,13 +45,6 @@ func UploadResume(ctx context.Context, resume *Resume) (string, error) {
 		return nil
 	}()
 
-	accountName, found := os.LookupEnv(AZURE_STORAGE_ACCOUNT_NAME)
-	if !found {
-		return "", fmt.Errorf("azure account name not found in environment variables")
-	}
-
-	serviceURL := fmt.Sprintf("https://%s.blob.core.windows.net/", accountName)
-
 	// TODO: placeholder - need function to obtain credentials
 	var cred azcore.TokenCredential
 
@@ -68,4 +60,8 @@ func UploadResume(ctx context.Context, resume *Resume) (string, error) {
 	}
 
 	return *resp.RequestID, err
+}
+
+func DownloadResume(ctx context.Context) {
+
 }
