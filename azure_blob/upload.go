@@ -19,7 +19,7 @@ const (
 )
 
 /* upload resume to azure and return ID */
-func UploadResume(ctx context.Context, resume *Resume, serviceURL string) (string, error) {
+func UploadResume(ctx context.Context, resume *Resume, serviceURL string, creds azcore.TokenCredential) (string, error) {
 	if len(resume.Data) <= 0 || len(resume.Data) > MAX_FILE_SIZE {
 		return "", fmt.Errorf("invalid resume size")
 	}
@@ -45,10 +45,7 @@ func UploadResume(ctx context.Context, resume *Resume, serviceURL string) (strin
 		return nil
 	}()
 
-	// TODO: placeholder - need function to obtain credentials
-	var cred azcore.TokenCredential
-
-	client, err := azblob.NewClient(serviceURL, cred, nil)
+	client, err := azblob.NewClient(serviceURL, creds, nil)
 	if err != nil {
 		return "", err
 	}
@@ -60,8 +57,4 @@ func UploadResume(ctx context.Context, resume *Resume, serviceURL string) (strin
 	}
 
 	return *resp.RequestID, err
-}
-
-func DownloadResume(ctx context.Context) {
-
 }
