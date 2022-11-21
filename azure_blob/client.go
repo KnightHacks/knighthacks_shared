@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
+	"os"
 )
 
 const (
@@ -15,6 +17,26 @@ type AzureBlobClient struct {
 	serviceURL string
 	creds      azcore.TokenCredential
 	client     *azblob.Client
+}
+
+func NewClientSecretCredentialFromEnv() (*azidentity.ClientSecretCredential, error) {
+	tenantId, exists := os.LookupEnv("AZURE_TENANT_ID")
+	if !exists {
+		return nil, fmt.Errorf("unable to find AZURE_TENANT_ID environmental variable")
+	}
+	clientId, exists := os.LookupEnv("AZURE_CLIENT_ID")
+	if !exists {
+		return nil, fmt.Errorf("unable to find AZURE_CLIENT_ID environmental variable")
+	}
+	clientSecret, exists := os.LookupEnv("AZURE_CLIENT_SECRET")
+	if !exists {
+		return nil, fmt.Errorf("unable to find AZURE_CLIENT_SECRET environmental variable")
+	}
+	credential, err := azidentity.NewClientSecretCredential(tenantId, clientId, clientSecret, &azidentity.ClientSecretCredentialOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return credential, nil
 }
 
 func NewAzureBlobClient(serviceURL string, creds azcore.TokenCredential) (*AzureBlobClient, error) {
