@@ -2,13 +2,14 @@ package database
 
 import (
 	"context"
+	"fmt"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"time"
 )
 
-//Queryable this is a sort of abstraction between pgx.Pool and Transactions, so we are able to pass either one
+// Queryable this is a sort of abstraction between pgx.Pool and Transactions, so we are able to pass either one
 type Queryable interface {
 	Exec(ctx context.Context, sql string, arguments ...interface{}) (commandTag pgconn.CommandTag, err error)
 	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
@@ -25,4 +26,16 @@ func ConnectWithRetries(databaseUri string) (pool *pgxpool.Pool, err error) {
 		time.Sleep(time.Second * 1)
 	}
 	return nil, err
+}
+
+func GeneratePlaceholderNumbers(start int, end int) string {
+	numbers := ""
+	for i := start; i <= end; i++ {
+		if i == end {
+			numbers += fmt.Sprintf("$%d", i)
+		} else {
+			numbers += fmt.Sprintf("$%d, ", i)
+		}
+	}
+	return numbers
 }

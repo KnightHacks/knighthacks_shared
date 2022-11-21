@@ -1,6 +1,6 @@
 module github.com/KnightHacks/knighthacks_shared
 
-go 1.18
+go 1.19
 
 require (
 	github.com/99designs/gqlgen v0.17.13
@@ -13,6 +13,9 @@ require (
 )
 
 require (
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.1.4 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v1.0.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v0.5.1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect

@@ -4,9 +4,12 @@ import (
 	"context"
 	"errors"
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/KnightHacks/knighthacks_shared/database"
 	"github.com/KnightHacks/knighthacks_shared/models"
 	"github.com/KnightHacks/knighthacks_shared/utils"
+	"github.com/golang-jwt/jwt"
 	"log"
+	"strings"
 )
 
 func DefaultGetUserId(ctx context.Context, obj interface{}) (string, error) {
@@ -15,6 +18,7 @@ func DefaultGetUserId(ctx context.Context, obj interface{}) (string, error) {
 
 type HasRoleDirective struct {
 	GetUserId func(ctx context.Context, obj interface{}) (string, error)
+	Queryable database.Queryable
 }
 
 func (receiver HasRoleDirective) Direct(ctx context.Context, obj interface{}, next graphql.Resolver, role models.Role) (interface{}, error) {
@@ -34,12 +38,27 @@ func (receiver HasRoleDirective) Direct(ctx context.Context, obj interface{}, ne
 			return nil, err
 		}
 
-		authHeader := ginContext.GetHeader("authorization")
-		// 7 because it's the length of 'bearer '
-		authHeader = authHeader[7:]
-		userClaims, err = auth.ParseJWT(authHeader, AccessTokenType)
-		if err != nil {
-			return nil, err
+		authHeader := ginContext.GetHeader("authorization")[7:]
+		// JWT will contain periods, API keys are alphanumeric
+		if strings.Contains(authHeader, ".") {
+			// 7 because it's the length of 'bearer '
+			userClaims, err = auth.ParseJWT(authHeader, AccessTokenType)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			userId, roleRetrieved, err := GetUserIDByAPIKey(ctx, receiver.Queryable, authHeader)
+			if err != nil {
+				return nil, err
+			}
+
+			userClaims = &UserClaims{
+				UserID:         userId,
+				Role:           roleRetrieved,
+				Type:           APIKeyTokenType,
+				StandardClaims: jwt.StandardClaims{},
+			}
+
 		}
 	}
 
