@@ -3,58 +3,55 @@ package azure_blob
 import (
 	"context"
 	"fmt"
-	"os"
-
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 )
 
-type Resume struct {
-	FileName string
-	Data     []byte
-}
-
 const (
-	MAX_FILE_SIZE = 25000000
+	MaxFileSize = 25000000
 )
 
-/* upload resume to azure and return ID */
-func UploadResume(ctx context.Context, resume *Resume, serviceURL string, creds azcore.TokenCredential) (string, error) {
-	if len(resume.Data) <= 0 || len(resume.Data) > MAX_FILE_SIZE {
-		return "", fmt.Errorf("invalid resume size")
-	}
+type AzureBlobClient struct {
+	serviceURL string
+	creds      azcore.TokenCredential
+	client     *azblob.Client
+}
 
-	// write resume data to a temporary file
-	err := os.WriteFile(resume.FileName, resume.Data, 0666)
+func NewAzureBlobClient(serviceURL string, creds azcore.TokenCredential) (*AzureBlobClient, error) {
+	client, err := azblob.NewClient(serviceURL, creds, &azblob.ClientOptions{})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
+	return &AzureBlobClient{serviceURL: serviceURL, creds: creds, client: client}, nil
+}
 
-	fileHandler, err := os.Open(resume.FileName)
+func (a *AzureBlobClient) UploadFile(ctx context.Context, containerName string, path string, buffer []byte) error {
+	if len(buffer) <= 0 || len(buffer) > MaxFileSize {
+		return fmt.Errorf("invalid resume size")
+	}
+	_, err := a.client.UploadBuffer(ctx, containerName, path, buffer, &azblob.UploadFileOptions{})
 	if err != nil {
-		return "", err
+		return err
 	}
-	defer fileHandler.Close()
+	return nil
+}
 
-	// delete file on local machine after upload
-	defer func() error {
-		err = os.Remove(resume.FileName)
-		if err != nil {
-			return err
-		}
-		return nil
-	}()
-
-	client, err := azblob.NewClient(serviceURL, creds, nil)
+func (a *AzureBlobClient) DownloadFile(ctx context.Context, containerName string, path string) (buffer []byte, err error) {
+	_, err = a.client.DownloadBuffer(ctx, containerName, path, buffer, &azblob.DownloadBufferOptions{})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
+	return buffer, nil
+}
 
-	// upload file
-	resp, err := client.UploadFile(ctx, "testcontainer", "example/path/blobname", fileHandler, &azblob.UploadFileOptions{})
-	if err != nil {
-		return "", err
-	}
+func (a *AzureBlobClient) UploadResume(ctx context.Context, userId string, hackathonId string, resumeBytes []byte) error {
+	return a.UploadFile(ctx, "resumes", getResumeBlobName(hackathonId, userId), resumeBytes)
+}
 
-	return *resp.RequestID, err
+func (a *AzureBlobClient) DownloadResume(ctx context.Context, userId string, hackathonId string) ([]byte, error) {
+	return a.DownloadFile(ctx, "resumes", getResumeBlobName(hackathonId, userId))
+}
+
+func getResumeBlobName(hackathonId string, userId string) string {
+	return fmt.Sprintf("resumes/%s/%s", hackathonId, userId)
 }
