@@ -23,6 +23,7 @@ type TokenType string
 const (
 	RefreshTokenType TokenType = "REFRESH"
 	AccessTokenType  TokenType = "ACCESS"
+	APIKeyTokenType  TokenType = "API_KEY"
 )
 
 var (
