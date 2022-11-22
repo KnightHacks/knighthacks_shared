@@ -19,10 +19,11 @@ type Queryable interface {
 func ConnectWithRetries(databaseUri string) (pool *pgxpool.Pool, err error) {
 	for i := 0; i < 10; i++ {
 		pool, err = pgxpool.New(context.Background(), databaseUri)
-		if err == nil {
-			return pool, nil
+		if err != nil {
+			time.Sleep(time.Second * 1)
+		} else {
+			continue
 		}
-		time.Sleep(time.Second * 1)
 	}
 	return pool, err
 }
