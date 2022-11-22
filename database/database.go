@@ -24,7 +24,7 @@ func ConnectWithRetries(databaseUri string) (pool *pgxpool.Pool, err error) {
 		}
 		time.Sleep(time.Second * 1)
 	}
-	return nil, err
+	return pool, err
 }
 
 func GeneratePlaceholderNumbers(start int, end int) string {
