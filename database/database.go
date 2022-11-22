@@ -22,7 +22,16 @@ func ConnectWithRetries(databaseUri string) (pool *pgxpool.Pool, err error) {
 		if err != nil {
 			time.Sleep(time.Second * 1)
 		} else {
-			continue
+			break
+		}
+	}
+
+	for i := 0; i < 10; i++ {
+		err = pool.Ping(context.Background())
+		if err != nil {
+			time.Sleep(time.Second * 1)
+		} else {
+			break
 		}
 	}
 	return pool, err
