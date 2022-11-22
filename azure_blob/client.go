@@ -67,13 +67,13 @@ func (a *AzureBlobClient) DownloadFile(ctx context.Context, containerName string
 }
 
 func (a *AzureBlobClient) UploadResume(ctx context.Context, userId string, hackathonId string, resumeBytes []byte) error {
-	return a.UploadFile(ctx, "resumes", getResumeBlobName(hackathonId, userId), resumeBytes)
+	return a.UploadFile(ctx, "resumes", GetResumeBlobName(hackathonId, userId), resumeBytes)
 }
 
 func (a *AzureBlobClient) DownloadResume(ctx context.Context, userId string, hackathonId string) ([]byte, error) {
-	return a.DownloadFile(ctx, "resumes", getResumeBlobName(hackathonId, userId))
+	return a.DownloadFile(ctx, "resumes", GetResumeBlobName(hackathonId, userId))
 }
 
-func getResumeBlobName(hackathonId string, userId string) string {
+func GetResumeBlobName(hackathonId string, userId string) string {
 	return fmt.Sprintf("resumes/%s/%s", hackathonId, userId)
 }
