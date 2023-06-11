@@ -37,14 +37,14 @@ func ConnectWithRetries(databaseUri string) (pool *pgxpool.Pool, err error) {
 	return pool, err
 }
 
-func GeneratePlaceholderNumbers(start int, end int) string {
-	numbers := ""
-	for i := start; i <= end; i++ {
-		if i == end {
-			numbers += fmt.Sprintf("$%d", i)
+func GenerateUpdatePairs(keys []any, startIndex int) string {
+	pairs := ""
+	for i, key := range keys {
+		if i == len(keys)-1 {
+			pairs += fmt.Sprintf("%s=$%d", key, i+startIndex)
 		} else {
-			numbers += fmt.Sprintf("$%d, ", i)
+			pairs += fmt.Sprintf("%s=$%d, ", key, i+startIndex)
 		}
 	}
-	return numbers
+	return pairs
 }
