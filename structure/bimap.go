@@ -9,7 +9,11 @@ type BiMap struct {
 }
 
 func NewBiMap() *BiMap {
-	return &BiMap{}
+	return &BiMap{
+		mutex:   sync.RWMutex{},
+		Forward: make(map[any]any),
+		Reverse: make(map[any]any),
+	}
 }
 
 func (m *BiMap) Put(key any, value any) {
