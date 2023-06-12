@@ -29,7 +29,12 @@ type idAble struct {
 	ID string
 }
 
-func GetPageInfo(array []any) *models.PageInfo {
+type Entity interface {
+	IsEntity()
+}
+
+func GetPageInfo(a any) *models.PageInfo {
+	array := a.([]*Entity)
 	if len(array) == 0 {
 		return &models.PageInfo{
 			StartCursor: ZeroString,
