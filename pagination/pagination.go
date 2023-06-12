@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/KnightHacks/knighthacks_shared/models"
-	"unsafe"
+	"reflect"
 )
 
 // TODO: should cursors be encrypted? is it worth it?
@@ -25,17 +25,13 @@ func DecodeCursor(cursor *string) (string, error) {
 	return bytesString, nil
 }
 
-type idAble struct {
-	ID string
-}
-
-type Entity interface {
-	IsEntity()
-}
-
 func GetPageInfo(a any) *models.PageInfo {
-	array := a.([]*Entity)
-	if len(array) == 0 {
+	reflectedArray := reflect.ValueOf(a)
+	if reflectedArray.Kind() != reflect.Slice {
+		panic("arr argument is not a slice")
+	}
+
+	if reflectedArray.Len() == 0 {
 		return &models.PageInfo{
 			StartCursor: ZeroString,
 			EndCursor:   ZeroString,
@@ -47,12 +43,9 @@ func GetPageInfo(a any) *models.PageInfo {
 		return base64.StdEncoding.EncodeToString(bytes)
 	}
 
-	firstElement := *(*idAble)(unsafe.Pointer(&array[0]))
-	lastElement := *(*idAble)(unsafe.Pointer(&array[len(array)-1]))
-
 	return &models.PageInfo{
-		StartCursor: format(firstElement.ID),
-		EndCursor:   format(lastElement.ID),
+		StartCursor: format(reflectedArray.Index(0).FieldByName("ID").String()),
+		EndCursor:   format(reflectedArray.Index(reflectedArray.Len() - 1).FieldByName("ID").String()),
 	}
 }
 
