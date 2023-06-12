@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/KnightHacks/knighthacks_shared/models"
+	"unsafe"
 )
 
 // TODO: should cursors be encrypted? is it worth it?
@@ -13,7 +14,7 @@ import (
 var ZeroString = "0"
 
 func DecodeCursor(cursor *string) (string, error) {
-	if cursor == nil {
+	if cursor == nil || *cursor == "" || *cursor == ZeroString {
 		return ZeroString, nil
 	}
 	bytes, err := base64.StdEncoding.DecodeString(*cursor)
@@ -24,15 +25,29 @@ func DecodeCursor(cursor *string) (string, error) {
 	return bytesString, nil
 }
 
-func GetPageInfo(first string, last string) *models.PageInfo {
+type idAble struct {
+	ID string
+}
+
+func GetPageInfo(array []any) *models.PageInfo {
+	if len(array) == 0 {
+		return &models.PageInfo{
+			StartCursor: ZeroString,
+			EndCursor:   ZeroString,
+		}
+	}
+
 	format := func(s string) string {
 		bytes := []byte(s)
 		return base64.StdEncoding.EncodeToString(bytes)
 	}
 
+	firstElement := *(*idAble)(unsafe.Pointer(&array[0]))
+	lastElement := *(*idAble)(unsafe.Pointer(&array[len(array)-1]))
+
 	return &models.PageInfo{
-		StartCursor: format(first),
-		EndCursor:   format(last),
+		StartCursor: format(firstElement.ID),
+		EndCursor:   format(lastElement.ID),
 	}
 }
 
