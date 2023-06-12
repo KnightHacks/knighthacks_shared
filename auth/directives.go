@@ -38,7 +38,13 @@ func (receiver HasRoleDirective) Direct(ctx context.Context, obj interface{}, ne
 			return nil, err
 		}
 
-		authHeader := ginContext.GetHeader("authorization")[7:]
+		authHeader := ginContext.GetHeader("authorization")
+		if len(authHeader) == 0 {
+			return nil, errors.New("you must provide an authorization header")
+		}
+
+		authHeader = authHeader[7:] // remove 'bearer '
+
 		// JWT will contain periods, API keys are alphanumeric
 		if strings.Contains(authHeader, ".") {
 			// 7 because it's the length of 'bearer '
