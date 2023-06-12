@@ -38,6 +38,6 @@ func (m *BiMap[K, V]) Get(key any) any {
 func (m *BiMap[K, V]) Delete(key K, value V) {
 	m.mutex.Lock()
 	delete(m.Forward, key)
-	delete(m.Forward, value)
+	delete(m.Reverse, value)
 	m.mutex.Unlock()
 }
