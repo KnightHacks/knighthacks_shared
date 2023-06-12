@@ -26,10 +26,10 @@ func (m *BiMap[K, V]) Put(key K, value V) {
 func (m *BiMap[K, V]) Get(key any) any {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
-	if value, ok := m.Forward[key]; ok {
+	if value, ok := m.Forward[key.(K)]; ok {
 		return value
 	}
-	if value, ok := m.Reverse[key]; ok {
+	if value, ok := m.Reverse[key.(V)]; ok {
 		return value
 	}
 	return nil
