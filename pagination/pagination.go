@@ -43,9 +43,19 @@ func GetPageInfo(a any) *models.PageInfo {
 		return base64.StdEncoding.EncodeToString(bytes)
 	}
 
+	var firstId string
+	var lastId string
+	if reflectedArray.Index(0).Kind() == reflect.Pointer {
+		firstId = reflect.Indirect(reflectedArray.Index(0)).FieldByName("ID").String()
+		lastId = reflect.Indirect(reflectedArray.Index(reflectedArray.Len() - 1)).FieldByName("ID").String()
+	} else {
+		firstId = reflectedArray.Index(0).FieldByName("ID").String()
+		lastId = reflectedArray.Index(reflectedArray.Len() - 1).FieldByName("ID").String()
+	}
+
 	return &models.PageInfo{
-		StartCursor: format(reflectedArray.Index(0).FieldByName("ID").String()),
-		EndCursor:   format(reflectedArray.Index(reflectedArray.Len() - 1).FieldByName("ID").String()),
+		StartCursor: format(firstId),
+		EndCursor:   format(lastId),
 	}
 }
 
