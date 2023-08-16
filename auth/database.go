@@ -10,10 +10,10 @@ func GetUserIDByAPIKey(ctx context.Context, queryable database.Queryable, apiKey
 	err = queryable.QueryRow(
 		ctx,
 		"SELECT user_id, role FROM users JOIN api_keys ak on users.id = ak.user_id AND ak.key = $1",
-		userId,
+		apiKey,
 	).Scan(&userId, &role)
 	if err != nil {
 		return "", "", err
 	}
-	return apiKey, role, nil
+	return userId, role, nil
 }
