@@ -32,7 +32,7 @@ func (a *AzureBlobClient) CreatePreSignedURL(hackathonId string, userId string) 
 }
 
 func (a *AzureBlobClient) GetResumeURL(hackathonID string, userID string) string {
-	return fmt.Sprintf("https://%S.blob.core.windows.net/resumes/%s/%s.pdf", a.credential.AccountName(), hackathonID, userID)
+	return fmt.Sprintf("https://%s.blob.core.windows.net/resumes/%s/%s.pdf", a.credential.AccountName(), hackathonID, userID)
 }
 
 func NewAzureBlobClient(credential *sas.SharedKeyCredential) (*AzureBlobClient, error) {
