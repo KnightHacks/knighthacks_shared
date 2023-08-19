@@ -27,7 +27,7 @@ func (a *AzureBlobClient) CreatePreSignedURL(hackathonId string, userId string) 
 		return "", nil
 	}
 
-	sasURL := fmt.Sprintf("https://%s.blob.core.windows.net/?%s", a.credential.AccountName(), sasQueryParams.Encode())
+	sasURL := fmt.Sprintf("https://%s.blob.core.windows.net/resumes/%s/%s.pdf?%s", a.credential.AccountName(), hackathonId, userId, sasQueryParams.Encode())
 	return sasURL, nil
 }
 
